@@ -737,11 +737,11 @@ bool PN532::inDataExchange(uint8_t *send, uint8_t sendLength, uint8_t *response,
             peer acting as card/responder.
 */
 /**************************************************************************/
-bool PN532::inListPassiveTarget()
+bool PN532::inListPassiveTarget(uint8_t cardbaudrate, uint16_t timeout)
 {
     pn532_packetbuffer[0] = PN532_COMMAND_INLISTPASSIVETARGET;
     pn532_packetbuffer[1] = 1;
-    pn532_packetbuffer[2] = 0;
+    pn532_packetbuffer[2] = cardbaudrate;
 
     DMSG("inList passive target\n");
 
@@ -749,7 +749,7 @@ bool PN532::inListPassiveTarget()
         return false;
     }
 
-    int16_t status = HAL(readResponse)(pn532_packetbuffer, sizeof(pn532_packetbuffer), 30000);
+    int16_t status = HAL(readResponse)(pn532_packetbuffer, sizeof(pn532_packetbuffer), timeout);
     if (status < 0) {
         return false;
     }
@@ -879,4 +879,26 @@ int16_t PN532::inRelease(const uint8_t relevantTarget){
     return HAL(readResponse)(pn532_packetbuffer, sizeof(pn532_packetbuffer));
 }
 
+uint8_t PN532::inAutoPoll(uint8_t pollNumber, uint8_t period, const uint8_t *types, uint8_t typeLen, uint16_t timeout) {
+    pn532_packetbuffer[0] = PN532_COMMAND_INAUTOPOLL;
+    pn532_packetbuffer[1] = pollNumber;
+    pn532_packetbuffer[2] = period;
+    for (uint8_t i = 0; i != typeLen; ++i) {
+        pn532_packetbuffer[i + 3] = types[i];
+    }
 
+    if (HAL(writeCommand)(pn532_packetbuffer, 3 + typeLen)) {
+        return false;  // command failed
+    }
+
+    // read data packet
+    if (HAL(readResponse)(pn532_packetbuffer, sizeof(pn532_packetbuffer), timeout) < 0) {
+        return false;
+    }
+
+    if (pn532_packetbuffer[0] > 0) {
+        inListedTag = 1;
+    }
+
+    return pn532_packetbuffer[0];
+}

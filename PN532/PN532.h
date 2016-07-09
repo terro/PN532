@@ -51,6 +51,9 @@
 
 
 #define PN532_MIFARE_ISO14443A              (0x00)
+#define PN532_212KBPS_FELICA                (0x01)
+#define PN532_424KBPS_FELICA                (0x02)
+#define PN532_106KBPS_ISO14443B             (0x03)
 
 // Mifare Commands
 #define MIFARE_CMD_AUTH_A                   (0x60)
@@ -137,9 +140,10 @@ public:
     bool tgSetData(const uint8_t *header, uint8_t hlen, const uint8_t *body = 0, uint8_t blen = 0);
 
     int16_t inRelease(const uint8_t relevantTarget = 0);
+    bool inListPassiveTarget(uint8_t cardbaudrate = PN532_MIFARE_ISO14443A, uint16_t timeout = 1000);
+    uint8_t inAutoPoll(uint8_t pollNumber, uint8_t period, const uint8_t *types, uint8_t typeLen, uint16_t timeout = 1000);
 
     // ISO14443A functions
-    bool inListPassiveTarget();
     bool readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, uint8_t *uidLength, uint16_t timeout = 1000, bool inlist = false);
     bool inDataExchange(uint8_t *send, uint8_t sendLength, uint8_t *response, uint8_t *responseLength);
 
